@@ -1,0 +1,40 @@
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Description of what the lane does"
+  lane :make do
+    
+  	# set framework name
+    framework_name = "PresentationLogger"
+    framework_filename = framework_name + ".framework"
+
+    # update version number
+    version_number = version_bump_podspec
+    
+    # build for each archs
+    xcodebuild
+    xcodebuild(xcargs: "-sdk iphonesimulator")
+
+    # make fat-lib
+    sh("cp", "-R", "../build/Release-iphoneos/" + framework_filename, "../build/" + framework_filename)
+    sh("cp", "-R", "../build/Release-iphonesimulator/" + framework_filename + "/Modules", "../build/" + framework_filename + "/")
+    sh("lipo", "-create", "../build/Release-iphoneos/" + framework_filename + "/" + framework_name, 
+    	"../build/Release-iphonesimulator/" + framework_filename + "/" + framework_name, 
+    	"-output", "../build/" + framework_filename + "/" + framework_name)
+    sh("cp", "-R", "../build/" + framework_filename, "../")
+    
+    # make zip-arch for uploading
+    zip(path: "./build/" + framework_filename, output_path: "./build/" + framework_filename + version_number + ".zip")
+    
+    filename = "../build/" + framework_filename + version_number + ".zip"
+    
+    storage_name = "presentationlogger"
+    destination = "s3://" + storage_name + "/" + framework_filename + version_number + ".zip"
+    
+    sh("aws", "s3", "cp", filename, destination, "--acl", "public-read")
+
+    pod_push(path: framework_name + ".podspec")
+
+  end
+end
