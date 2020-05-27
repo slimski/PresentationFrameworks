@@ -17,20 +17,30 @@ platform :ios do
     xcodebuild(xcargs: "-sdk iphonesimulator")
 
     # make fat-lib
-    sh("cp", "-R", "../build/Release-iphoneos/" + framework_filename, "../build/" + framework_filename)
-    sh("cp", "-R", "../build/Release-iphonesimulator/" + framework_filename + "/Modules", "../build/" + framework_filename + "/")
-    sh("lipo", "-create", "../build/Release-iphoneos/" + framework_filename + "/" + framework_name, 
-    	"../build/Release-iphonesimulator/" + framework_filename + "/" + framework_name, 
+    sh("cp", "-R", "../build/Release-iphoneos/" + framework_filename, 
+        "../build/" + framework_filename)
+
+
+    sh("cp", "-R", "../build/Release-iphonesimulator/" + framework_filename + 
+        "/Modules", "../build/" + framework_filename + "/")
+
+    sh("lipo", "-create", "../build/Release-iphoneos/" + framework_filename + 
+        "/" + framework_name, 
+    	"../build/Release-iphonesimulator/" + framework_filename + "/" + 
+        framework_name, 
     	"-output", "../build/" + framework_filename + "/" + framework_name)
+    
     sh("cp", "-R", "../build/" + framework_filename, "../")
     
     # make zip-arch for uploading
-    zip(path: "./build/" + framework_filename, output_path: "./build/" + framework_filename + version_number + ".zip")
+    zip(path: "./build/" + framework_filename, output_path: "./build/" + 
+        framework_filename + version_number + ".zip")
     
     filename = "../build/" + framework_filename + version_number + ".zip"
     
     storage_name = "presentationlogger"
-    destination = "s3://" + storage_name + "/" + framework_filename + version_number + ".zip"
+    destination = "s3://" + storage_name + "/" + framework_filename + 
+        version_number + ".zip"
     
     sh("aws", "s3", "cp", filename, destination, "--acl", "public-read")
 
